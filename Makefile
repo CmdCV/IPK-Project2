@@ -26,7 +26,7 @@ OBJS = $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
 # Main rule
 all: $(TARGET)
 
-run: all
+run: clean all
 	@clear
 	@chmod +x $(TARGET)
 	@./$(TARGET) -t tcp -s vitapavlik.cz

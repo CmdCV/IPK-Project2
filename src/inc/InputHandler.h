@@ -21,8 +21,10 @@ public:
     InputHandler(ParsedArgs args);
     ~InputHandler();
     void run();
+    void stop();
 private:
     bool authenticated = false;
+    bool running = true;
     ParsedArgs arguments;
     string displayName;
     unique_ptr<TCPClient> tcpClient;
