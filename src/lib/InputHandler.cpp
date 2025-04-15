@@ -43,7 +43,7 @@ void InputHandler::handleCommand(const string& command) {
         } else {
             cout << "Authenticating as " << displayName << "...\n";
             this->displayName = displayName;
-            // TODO: wirte auth logic
+            // TODO: write auth logic
             // Sends AUTH message with the data provided from the command to the server (and correctly handles the Reply message), locally sets the DisplayName value (same as the /rename command)
         }
     } else if (cmd == "/join") {
@@ -54,7 +54,7 @@ void InputHandler::handleCommand(const string& command) {
             cout << "ERROR: Invalid /join parameters.\n";
         } else {
             cout << "Joining channel " << channel << "...\n";
-            // TODO: wirte join logic
+            // TODO: write join logic
             // Sends JOIN message with channel name from the command to the server (and correctly handles the Reply message)
         }
     } else if (cmd == "/rename") {
@@ -77,8 +77,9 @@ void InputHandler::handleCommand(const string& command) {
 }
 
 void InputHandler::handleMessage(const string& message) {
+    printf_debug("Message: Sending message: m=\"%s\"", message.c_str());
     cout << "Sending message: " << message << "\n";
-    // TODO: wirte message logic
+    // TODO: write message logic
 }
 
 void InputHandler::printHelp() {

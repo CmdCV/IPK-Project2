@@ -10,8 +10,17 @@ ParsedArgs ArgHandler::parse(int argc, char* argv[]) {
             printHelp();
             exit(0);
         } else if (!strcmp(argv[i], "-t") && i + 1 < argc) {
-            args.proto = argv[++i];
-            printf_debug("CLI arguments: Protocol set to %s", args.proto.c_str());
+            i++;
+            if(strcmp(argv[i], "tcp") == 0) {
+            	args.proto = ProtocolType::TCP;
+                printf_debug("CLI arguments: Protocol set to TCP");
+            } else if(strcmp(argv[i], "udp") == 0) {
+                args.proto = ProtocolType::UDP;
+                printf_debug("CLI arguments: Protocol set to UDP");
+            } else {
+                valid = false;
+                printf_debug("CLI arguments: Unknown protocol %s", argv[i]);
+            }
         } else if (!strcmp(argv[i], "-s") && i + 1 < argc) {
             args.host = resolve_address(argv[++i]);
             printf_debug("CLI arguments: Host set to %s resolved from %s", args.host.c_str(), argv[i]);
@@ -30,7 +39,7 @@ ParsedArgs ArgHandler::parse(int argc, char* argv[]) {
         }
     }
 
-    if (!valid || args.proto.empty() || args.host.empty()) {
+    if (!valid || args.host.empty()) {
 	    cerr << "ERROR: Unknown or incomplete argument"<< endl;
 	    printHelp();
 	    exit(1);

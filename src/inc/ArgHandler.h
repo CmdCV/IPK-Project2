@@ -12,12 +12,15 @@
 #include <vector>
 #include <arpa/inet.h>
 
-
-
 using namespace std;
 
+enum class ProtocolType {
+    TCP,
+    UDP
+};
+
 struct ParsedArgs {
-    string proto;             // -t
+    ProtocolType proto;             // -t
     string host;              // -s
     uint16_t port = 4567;     // -p
     uint16_t timeout = 250;   // -d
