@@ -13,6 +13,7 @@ public:
     ProtocolClient(string host, uint16_t port);
     ~ProtocolClient();
 
+    virtual void stop() = 0;
     virtual void sendMessage(unique_ptr<Message> message) = 0;
     virtual unique_ptr<Message> receiveMessage() = 0;
     // virtual void connect();

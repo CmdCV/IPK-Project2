@@ -14,7 +14,17 @@ InputHandler::InputHandler(ParsedArgs args):
     thread receiveThread([this]() {
         while (running) {
             processIncomingMessage();
+            if (this->arguments.proto == ProtocolType::TCP) {
+                if (tcpClient->receiveMessage()->getType() == MessageType::REPLY) {
+                    if (!authenticated) {
+                        authenticated = true;
+                    }
+                }
+            } else {
+
+            }
         }
+        if (this->arguments.proto == ProtocolType::TCP) tcpClient->stop();
     });
     this->receiveThread = move(receiveThread);
 }
@@ -95,7 +105,11 @@ void InputHandler::handleCommand(const string& command) {
                 this->displayName = displayName;
             }
         } else {
-            cout << "ERROR: Unknown command \'" << cmd.c_str() << "\', use /help for available commands.\n";
+            if (cmd == "/auth"){
+                cout << "ERROR: You are already authenticated...\n";
+            } else {
+                cout << "ERROR: Unknown command \'" << cmd.c_str() << "\', use /help for available commands.\n";
+            }
         }
     }
 }
@@ -132,10 +146,14 @@ void InputHandler::processIncomingMessage() {
 }
 
 void InputHandler::stop() {
+    printf_debug("InputHandler: Stopping...");
+    running = false;
     vector<string> params;
     params.push_back(this->displayName);
-    tcpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
-    running = false;
+    if (this->arguments.proto == ProtocolType::TCP) {
+        tcpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
+        tcpClient->stop();
+    }
 }
 void InputHandler::printHelp() {
     cout << "Available commands:\n"

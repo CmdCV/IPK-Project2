@@ -10,6 +10,7 @@ public:
     TCPClient(const ParsedArgs& args);
     ~TCPClient();
 
+    void stop() override;
     void sendMessage(unique_ptr<Message> message) override;
     unique_ptr<Message> receiveMessage() override;
 };

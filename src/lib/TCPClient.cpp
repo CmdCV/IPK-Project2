@@ -36,6 +36,15 @@ TCPClient::TCPClient(const ParsedArgs& args) :
 
 TCPClient::~TCPClient() {
     printf_debug("TCPClient: Destructing...");
+    stop();
+}
+
+void TCPClient::stop() {
+    printf_debug("TCPClient: Stopping...");
+    if (this->ip_socket != 0) {
+        close(this->ip_socket);
+        this->ip_socket = 0;
+    }
 }
 
 void TCPClient::sendMessage(unique_ptr<Message> message) {
