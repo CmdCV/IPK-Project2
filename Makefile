@@ -29,7 +29,7 @@ all: $(TARGET)
 run: all
 	@clear
 	@chmod +x $(TARGET)
-	@./$(TARGET) -t tcp -s 127.0.0.1 -p 3000 -d 100 -r 1
+	@./$(TARGET) -t tcp -s vitapavlik.cz
 
 # Linking rule
 $(TARGET): $(OBJS)

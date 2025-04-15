@@ -20,7 +20,7 @@ enum class ProtocolType {
 };
 
 struct ParsedArgs {
-    ProtocolType proto;             // -t
+    ProtocolType proto;       // -t
     string host;              // -s
     uint16_t port = 4567;     // -p
     uint16_t timeout = 250;   // -d

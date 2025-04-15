@@ -44,7 +44,7 @@ ParsedArgs ArgHandler::parse(int argc, char* argv[]) {
 	    printHelp();
 	    exit(1);
     }
-
+    printf_debug("CLI arguments: returning p=%s h=%s p=%d t=%d r=%d", args.proto == ProtocolType::TCP ? "tcp" : "udp", args.host.c_str(), args.port, args.timeout, args.retries);
     return args;
 }
 

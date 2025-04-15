@@ -1,16 +1,35 @@
 #include "../inc/InputHandler.h"
-#include <iostream>
-#include <string>
-#include <sstream>
 
+InputHandler::InputHandler(ParsedArgs args):
+    arguments(args) {
+    printf_debug("Input: Constructing...");
+    if (args.proto == ProtocolType::TCP) {
+        printf_debug("Input: Creating TCPClient and thread");
+        tcpClient = make_unique<TCPClient>(args);
+    } else {
+        printf_debug("Input: Creating UDPClient and thread");
+        udpClient = make_unique<UDPClient>(args);
+    }
 
-InputHandler::InputHandler(ParsedArgs args): arguments(args) {
+    thread receiveThread([this]() {
+        while (true) {
+            processIncomingMessage();
+        }
+    });
+    this->receiveThread = move(receiveThread);
+}
+
+InputHandler::~InputHandler() {
+    printf_debug("Input: Destructing...");
+    if (receiveThread.joinable()) {
+        receiveThread.join();
+    }
 }
 
 void InputHandler::run() {
     string input;
     while (true) {
-        cout << "> ";
+        // cout << "> ";
         getline(cin, input);
 
         if (input.empty()) {
@@ -18,12 +37,10 @@ void InputHandler::run() {
             continue;
         }
 
-        // Zpracování příkazu
         if (input[0] == '/') {
-            printf_debug("Input: / detected, processing as command");
             handleCommand(input);
         } else {
-            printf_debug("Input: no / detected, processing as message");
+            printf_debug("Input: No / detected, processing as message");
             handleMessage(input);
         }
     }
@@ -41,10 +58,15 @@ void InputHandler::handleCommand(const string& command) {
         if (username.empty() || secret.empty() || displayName.empty()) {
             cout << "ERROR: Invalid /auth parameters.\n";
         } else {
-            cout << "Authenticating as " << displayName << "...\n";
             this->displayName = displayName;
             // TODO: write auth logic
             // Sends AUTH message with the data provided from the command to the server (and correctly handles the Reply message), locally sets the DisplayName value (same as the /rename command)
+
+            vector<string> params;
+            params.push_back(username);
+            params.push_back(secret);
+            params.push_back(this->displayName);
+            tcpClient->sendMessage(MessageFactory::createMessage(MessageType::AUTH, params));
         }
     } else if (cmd == "/join") {
         string channel;
@@ -56,6 +78,11 @@ void InputHandler::handleCommand(const string& command) {
             cout << "Joining channel " << channel << "...\n";
             // TODO: write join logic
             // Sends JOIN message with channel name from the command to the server (and correctly handles the Reply message)
+
+            vector<string> params;
+            params.push_back(channel);
+            params.push_back(this->displayName);
+            tcpClient->sendMessage(MessageFactory::createMessage(MessageType::JOIN, params));
         }
     } else if (cmd == "/rename") {
         string displayName;
@@ -77,9 +104,33 @@ void InputHandler::handleCommand(const string& command) {
 }
 
 void InputHandler::handleMessage(const string& message) {
-    printf_debug("Message: Sending message: m=\"%s\"", message.c_str());
-    cout << "Sending message: " << message << "\n";
-    // TODO: write message logic
+    vector<string> params;
+    params.push_back(this->displayName);
+    params.push_back(message);
+    tcpClient->sendMessage(MessageFactory::createMessage(MessageType::MSG, params));
+}
+
+void InputHandler::processIncomingMessage() {
+    try {
+        switch ((this->arguments.proto == ProtocolType::TCP ? tcpClient->receiveMessage() : udpClient->receiveMessage())->getType()) {
+            case MessageType::AUTH:
+                break;
+            case MessageType::JOIN:
+                break;
+            case MessageType::MSG:
+                break;
+            case MessageType::REPLY:
+                break;
+            case MessageType::ERR:
+                break;
+            case MessageType::BYE:
+                break;
+            default:
+                break;
+        }
+    } catch (const exception& e) {
+        printf_debug("InputHandler: Error processing message: %s", e.what());
+    }
 }
 
 void InputHandler::printHelp() {

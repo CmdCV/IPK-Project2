@@ -7,18 +7,21 @@
 #include <stdexcept>
 #include <regex>
 #include <memory>
+#include <sstream>
+#include <vector>
+#include <iostream>
 
 using namespace std;
 
 enum class MessageType {
     AUTH,       // Used for client authentication (signing in) using a user-provided username, display name and password
-    BYE,        // Indicates that the conversation/connection is to be terminated
-    CONFIRM,    // UDP only: Explicitly confirms the successful delivery of the message
-    ERR,        // Indicates an error occurred, resulting in graceful termination of communication
     JOIN,       // Represents the client's request to join a chat channel by its identifier
     MSG,        // Contains user display name and a message for the joined channel
+    REPLY,      // Contains positive/negative confirmation for certain requests
+    ERR,        // Indicates an error occurred, resulting in graceful termination of communication
+    BYE,        // Indicates that the conversation/connection is to be terminated
+    CONFIRM,    // UDP only: Explicitly confirms the successful delivery of the message
     PING,       // UDP only: Aliveness check mechanism sent periodically by the server
-    REPLY       // Contains positive/negative confirmation for certain requests
 };
 
 class Message {
@@ -97,6 +100,7 @@ public:
          * MessageType.REPLY => [bool success, string& messageContent]
      */
     static unique_ptr<Message> createMessage(MessageType type, const vector<string>& params);
+    static unique_ptr<Message> parseMessage(const string& input);
 };
 
 #endif //MESSAGE_H

@@ -1,0 +1,16 @@
+#ifndef TCPCLIENT_H
+#define TCPCLIENT_H
+
+#include "ArgHandler.h"
+#include "ProtocolClient.h"
+
+class TCPClient : ProtocolClient
+{
+public:
+    TCPClient(const ParsedArgs& args);
+    ~TCPClient();
+
+    void sendMessage(unique_ptr<Message> message) override;
+    unique_ptr<Message> receiveMessage() override;
+};
+#endif //TCPCLIENT_H
