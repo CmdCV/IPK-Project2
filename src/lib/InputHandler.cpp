@@ -1,0 +1,90 @@
+#include "../inc/InputHandler.h"
+#include <iostream>
+#include <string>
+#include <sstream>
+
+
+InputHandler::InputHandler(ParsedArgs args): arguments(args) {
+}
+
+void InputHandler::run() {
+    string input;
+    while (true) {
+        cout << "> ";
+        getline(cin, input);
+
+        if (input.empty()) {
+            printf_debug("Input: User input was empty, skipping");
+            continue;
+        }
+
+        // Zpracování příkazu
+        if (input[0] == '/') {
+            printf_debug("Input: / detected, processing as command");
+            handleCommand(input);
+        } else {
+            printf_debug("Input: no / detected, processing as message");
+            handleMessage(input);
+        }
+    }
+}
+
+void InputHandler::handleCommand(const string& command) {
+    istringstream iss(command);
+    string cmd;
+    iss >> cmd;
+
+    if (cmd == "/auth") {
+        string username, secret, displayName;
+        iss >> username >> secret >> displayName;
+        printf_debug("Input: /auth command received with parameters: u=%s s=%s d=%s", username.c_str(), secret.c_str(), displayName.c_str());
+        if (username.empty() || secret.empty() || displayName.empty()) {
+            cout << "ERROR: Invalid /auth parameters.\n";
+        } else {
+            cout << "Authenticating as " << displayName << "...\n";
+            this->displayName = displayName;
+            // TODO: wirte auth logic
+            // Sends AUTH message with the data provided from the command to the server (and correctly handles the Reply message), locally sets the DisplayName value (same as the /rename command)
+        }
+    } else if (cmd == "/join") {
+        string channel;
+        iss >> channel;
+        printf_debug("Input: /join command received with parameters: c=%s", channel.c_str());
+        if (channel.empty()) {
+            cout << "ERROR: Invalid /join parameters.\n";
+        } else {
+            cout << "Joining channel " << channel << "...\n";
+            // TODO: wirte join logic
+            // Sends JOIN message with channel name from the command to the server (and correctly handles the Reply message)
+        }
+    } else if (cmd == "/rename") {
+        string displayName;
+        iss >> displayName;
+        printf_debug("Input: /rename command received with parameters: d=%s", displayName.c_str());
+        if (displayName.empty()) {
+            cout << "ERROR: Invalid /rename parameters.\n";
+        } else {
+            cout << "Renaming to " << displayName << "...\n";
+            this->displayName = displayName;
+        }
+    } else if (cmd == "/help") {
+        printf_debug("Input: /help command received");
+        printHelp();
+    } else {
+        printf_debug("Input: Unknown command %s received, skipping", cmd.c_str());
+        cout << "ERROR: Unknown command, use /help for avaliable commands.\n";
+    }
+}
+
+void InputHandler::handleMessage(const string& message) {
+    cout << "Sending message: " << message << "\n";
+    // TODO: wirte message logic
+}
+
+void InputHandler::printHelp() {
+    cout << "Available commands:\n"
+        << "/auth <username> <secret> <displayName> - Authenticate user\n"
+        << "/join <channel> - Join a channel\n"
+        << "/rename <displayName> - Change display name\n"
+        << "/help - Show this help message\n";
+}

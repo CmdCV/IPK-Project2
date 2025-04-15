@@ -12,7 +12,7 @@ void Message::validateRegex(const string& value, const string& pattern, const st
     }
 }
 
-AuthMessage::AuthMessage(const string& username, const string& displayName, const string& secret)
+AuthMessage::AuthMessage(const string& username, const string& secret, const string& displayName)
     :Message(MessageType::AUTH) {
     validateLength(username, 20, "Username");
     validateRegex(username, "[a-zA-Z0-9_-]+", "Username");

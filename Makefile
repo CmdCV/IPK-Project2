@@ -1,13 +1,14 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -DDEBUG_PRINT
+#CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -DDEBUG_PRINT
+CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -DDEBUG_PRINT -Wno-gnu-zero-variadic-macro-arguments
 LDFLAGS =
 
 # Faculty XLOGIN
 XLOGIN = xurbana00
 
 # Target name
-TARGET = ipk25-chat
+TARGET = ipk25chat-client
 
 # Directories
 BUILD_DIR = build
@@ -24,6 +25,11 @@ OBJS = $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
 
 # Main rule
 all: $(TARGET)
+
+run: all
+	@clear
+	@chmod +x $(TARGET)
+	@./$(TARGET) -t tcp -s 127.0.0.1 -p 3000 -d 100 -r 1
 
 # Linking rule
 $(TARGET): $(OBJS)

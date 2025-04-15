@@ -1,6 +1,8 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include "debugPrint.h"
+
 #include <string>
 #include <stdexcept>
 #include <regex>
@@ -21,10 +23,10 @@ enum class MessageType {
 
 class Message {
 protected:
-    MessageType type; // Typ zprávy
+    MessageType type;
 
 public:
-    explicit Message(MessageType type) : type(type) {}
+    Message(MessageType type) : type(type) {}
     virtual ~Message() = default;
 
     virtual string serialize() const = 0;
@@ -87,7 +89,7 @@ public:
      * @brief Creates a Message instance based on the provided type and parameters.
      * @param MessageType type
      * @param vector<string>& params
-         * MessageType.AUTH => [string& username, string& displayName, string& secret]
+         * MessageType.AUTH => [string& username, string& secret, string& displayName]
          * MessageType.JOIN => [string& channelID, string& displayName]
          * MessageType.ERR => [string& displayName, string& messageContent]
          * MessageType.BYE => [string& displayName]
