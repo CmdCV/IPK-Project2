@@ -4,7 +4,7 @@
 #include "ArgHandler.h"
 #include "ProtocolClient.h"
 
-class TCPClient : ProtocolClient
+class TCPClient : public ProtocolClient
 {
 public:
     TCPClient(const ParsedArgs& args);

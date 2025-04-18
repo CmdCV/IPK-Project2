@@ -1,4 +1,5 @@
 #include "../inc/InputHandler.h"
+#include <chrono>
 
 InputHandler::InputHandler(ParsedArgs args):
     arguments(args) {
@@ -12,19 +13,19 @@ InputHandler::InputHandler(ParsedArgs args):
     }
 
     thread receiveThread([this]() {
-        while (running) {
-            processIncomingMessage();
-            if (this->arguments.proto == ProtocolType::TCP) {
-                if (tcpClient->receiveMessage()->getType() == MessageType::REPLY) {
-                    if (!authenticated) {
-                        authenticated = true;
-                    }
-                }
-            } else {
-
+        try {
+            while (running) {
+                processIncomingMessage();
             }
+        } catch (const exception& e) {
+            printf_debug("InputHandler: Receiver thread fatal error: %s", e.what());
         }
-        if (this->arguments.proto == ProtocolType::TCP) tcpClient->stop();
+
+        if (this->arguments.proto == ProtocolType::TCP) {
+            tcpClient->stop();
+        } else {
+            udpClient->stop();
+        }
     });
     this->receiveThread = move(receiveThread);
 }
@@ -50,8 +51,12 @@ void InputHandler::run() {
         if (input[0] == '/') {
             handleCommand(input);
         } else {
+            if (!authenticated) {
+                cout << "ERROR: Not authenticated.\n" << flush;
+            } else {
             printf_debug("Input: No / detected, processing as message");
-            handleMessage(input);
+                handleMessage(input);
+            }
         }
     }
 }
@@ -70,17 +75,21 @@ void InputHandler::handleCommand(const string& command) {
             iss >> username >> secret >> displayName;
             printf_debug("Input: /auth command received with parameters: u=%s s=%s d=%s", username.c_str(), secret.c_str(), displayName.c_str());
             if (username.empty() || secret.empty() || displayName.empty()) {
-                cout << "ERROR: Invalid /auth parameters.\n";
+                cout << "ERROR: Invalid /auth parameters.\n" << flush;
             } else {
                 this->displayName = displayName;
                 vector<string> params;
                 params.push_back(username);
-                params.push_back(secret);
                 params.push_back(this->displayName);
-                tcpClient->sendMessage(MessageFactory::createMessage(MessageType::AUTH, params));
+                params.push_back(secret);
+                if (arguments.proto == ProtocolType::TCP) {
+                    tcpClient->sendMessage(MessageFactory::createMessage(MessageType::AUTH, params));
+                } else {
+                    udpClient->sendMessage(MessageFactory::createMessage(MessageType::AUTH, params));
+                }
             }
         } else {
-            cout << "ERROR: You need to authenticate first...\n";
+            cout << "ERROR: You need to authenticate first...\n" << flush;
         }
     } else {
         if (cmd == "/join") {
@@ -88,27 +97,31 @@ void InputHandler::handleCommand(const string& command) {
             iss >> channel;
             printf_debug("Input: /join command received with parameters: c=%s", channel.c_str());
             if (channel.empty()) {
-                cout << "ERROR: Invalid /join parameters.\n";
+                cout << "ERROR: Invalid /join parameters.\n" << flush;
             } else {
                 vector<string> params;
                 params.push_back(channel);
                 params.push_back(this->displayName);
-                tcpClient->sendMessage(MessageFactory::createMessage(MessageType::JOIN, params));
+                if (arguments.proto == ProtocolType::TCP) {
+                    tcpClient->sendMessage(MessageFactory::createMessage(MessageType::JOIN, params));
+                } else {
+                    udpClient->sendMessage(MessageFactory::createMessage(MessageType::JOIN, params));
+                }
             }
         } else if (cmd == "/rename") {
             string displayName;
             iss >> displayName;
             printf_debug("Input: /rename command received with parameters: d=%s", displayName.c_str());
             if (displayName.empty()) {
-                cout << "ERROR: Invalid /rename parameters.\n";
+                cout << "ERROR: Invalid /rename parameters.\n" << flush;
             } else {
                 this->displayName = displayName;
             }
         } else {
-            if (cmd == "/auth"){
-                cout << "ERROR: You are already authenticated...\n";
+            if (cmd == "/auth") {
+                cout << "ERROR: You are already authenticated...\n" << flush;
             } else {
-                cout << "ERROR: Unknown command \'" << cmd.c_str() << "\', use /help for available commands.\n";
+                cout << "ERROR: Unknown command '" << cmd << "', use /help for available commands.\n" << flush;
             }
         }
     }
@@ -118,24 +131,27 @@ void InputHandler::handleMessage(const string& message) {
     vector<string> params;
     params.push_back(this->displayName);
     params.push_back(message);
-    tcpClient->sendMessage(MessageFactory::createMessage(MessageType::MSG, params));
+    if (this->arguments.proto == ProtocolType::TCP) {
+        tcpClient->sendMessage(MessageFactory::createMessage(MessageType::MSG, params));
+    } else {
+        udpClient->sendMessage(MessageFactory::createMessage(MessageType::MSG, params));
+    }
 }
 
 void InputHandler::processIncomingMessage() {
     try {
-        switch ((this->arguments.proto == ProtocolType::TCP ? tcpClient->receiveMessage() : udpClient->receiveMessage())->getType()) {
-            case MessageType::AUTH:
-                break;
-            case MessageType::JOIN:
-                break;
-            case MessageType::MSG:
-                break;
+        unique_ptr<Message> msg = arguments.proto == ProtocolType::TCP ? tcpClient->receiveMessage() : udpClient->receiveMessage();
+
+        if (!msg) {
+            return;
+        }
+
+        switch (msg->getType()) {
             case MessageType::REPLY:
                 if (!authenticated) authenticated = true;
                 break;
-            case MessageType::ERR:
-                break;
             case MessageType::BYE:
+                running = false;
                 break;
             default:
                 break;
@@ -151,14 +167,23 @@ void InputHandler::stop() {
     vector<string> params;
     params.push_back(this->displayName);
     if (this->arguments.proto == ProtocolType::TCP) {
-        tcpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
+        if (authenticated) {
+            tcpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
+        }
         tcpClient->stop();
+    } else {
+        if (authenticated) {
+            udpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
+        }
+        udpClient->stop();
     }
 }
+
 void InputHandler::printHelp() {
     cout << "Available commands:\n"
         << "/auth <username> <secret> <displayName> - Authenticate user\n"
         << "/join <channel> - Join a channel\n"
         << "/rename <displayName> - Change display name\n"
-        << "/help - Show this help message\n";
+        << "/help - Show this help message\n"
+        << flush;
 }

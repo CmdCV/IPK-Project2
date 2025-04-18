@@ -11,7 +11,7 @@ static InputHandler* globalHandler = nullptr;
 void signal_handler(int signal) {
     if (signal == SIGINT && globalHandler) {
         globalHandler->stop();
-        cout << "\nProgram interrupted. Closing..." << endl;
+        cout << "\nProgram interrupted. Closing..." << endl << flush;
         exit(EXIT_SUCCESS);
     }
 }

@@ -85,5 +85,6 @@ void ArgHandler::printHelp() {
         "  -p <port>       Server port (default: 4567)\n"
         "  -d <timeout>    UDP confirmation timeout in milliseconds (default: 250)\n"
         "  -r <retries>    Maximum number of UDP retransmissions (default: 3)\n"
-        "  -h              Prints this program help output and exits\n";
+        "  -h              Prints this program help output and exits\n"
+         << flush;
 }

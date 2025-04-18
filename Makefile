@@ -1,7 +1,6 @@
 # Compiler and flags
 CXX = g++
-#CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -DDEBUG_PRINT
-CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -DDEBUG_PRINT -Wno-gnu-zero-variadic-macro-arguments
+CXXFLAGS = -std=c++20 -Wall -Wextra -pedantic -DDEBUG_PRINT
 LDFLAGS =
 
 # Faculty XLOGIN
@@ -29,7 +28,11 @@ all: $(TARGET)
 run: clean all
 	@clear
 	@chmod +x $(TARGET)
+
+run-tcp: run
 	@./$(TARGET) -t tcp -s vitapavlik.cz
+run-udp: run
+	@./$(TARGET) -t udp -s localhost
 
 # Linking rule
 $(TARGET): $(OBJS)
