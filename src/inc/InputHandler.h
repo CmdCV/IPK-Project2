@@ -24,7 +24,7 @@ public:
     void stop();
 private:
     std::atomic<bool> authenticated{false};
-    bool running = true;
+    std::atomic<bool> running{true};
     ParsedArgs arguments;
     string displayName;
     unique_ptr<TCPClient> tcpClient;

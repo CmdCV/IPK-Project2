@@ -18,7 +18,7 @@ InputHandler::InputHandler(ParsedArgs args):
 
     thread receiveThread([this]() {
         try {
-            while (running) {
+            while (running.load(std::memory_order_acquire)) {
                 processIncomingMessage();
             }
         } catch (const exception& e) {
@@ -43,7 +43,7 @@ InputHandler::~InputHandler() {
 
 void InputHandler::run() {
     string input;
-    while (running) {
+    while (running.load(std::memory_order_acquire)) {
         // wait for stdin with timeout to allow exit without blocking
         fd_set readfds;
         FD_ZERO(&readfds);
@@ -52,12 +52,12 @@ void InputHandler::run() {
         int ret = select(STDIN_FILENO + 1, &readfds, nullptr, nullptr, &tv);
         if (ret > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
             if (!std::getline(std::cin, input)) {
-                // EOF or error, stop loop
-                running = false;
+                if (authenticated.load(std::memory_order_acquire)) {
+                    stop();
+                }
                 break;
             }
         } else {
-            // no input ready, recheck running flag
             continue;
         }
 
@@ -185,12 +185,13 @@ void InputHandler::processIncomingMessage() {
         }
     } catch (const exception& e) {
         printf_debug("InputHandler: Error processing message: %s", e.what());
+        cout << "ERROR: Invalid message.\n" << flush;
     }
 }
 
 void InputHandler::stop() {
     printf_debug("InputHandler: Stopping...");
-    running = false;
+    running.store(false, std::memory_order_release);
     vector<string> params;
     params.push_back(this->displayName);
     if (this->arguments.proto == ProtocolType::TCP) {
