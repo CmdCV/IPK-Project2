@@ -249,27 +249,29 @@ unique_ptr<Message> MessageFactory::parseMessage(const string& input) {
     } else if (type == "MSG") {
         string F, d, IS;
         iss >> F >> d >> IS;
-        string m; getline(iss, m);
+        string m;
+        getline(iss, m);
         string content = m.substr(1);
         if (!content.empty() && content.back() == '\r') content.pop_back();
-        cout << d << ": " << content << endl << flush;
+        cout << d << ": " << content << '\n';
         return createMessage(MessageType::MSG, {d, content});
     } else if (type == "REPLY") {
         string ok, IS;
         iss >> ok >> IS;
-        string m; getline(iss, m);
+        string m;
+        getline(iss, m);
         string content = m.substr(1);
         if (!content.empty() && content.back() == '\r') content.pop_back();
-        cout << "Action " << (ok == "OK" ? "Success: " : "Failure: ") << content << endl << flush;
+        cout << "Action " << (ok == "OK" ? "Success: " : "Failure: ") << content << '\n';
         return createMessage(MessageType::REPLY, {ok == "OK" ? "true" : "false", content, "0"});
     } else if (type == "ERR") {
         string F, d, IS;
         iss >> F >> d >> IS;
-        string m; getline(iss, m);
+        string m;
+        getline(iss, m);
         string content = m.substr(1);
         if (!content.empty() && content.back() == '\r') content.pop_back();
-        // ERROR: {MessageContent}\n
-        cout << "ERROR: " << ": " << content << endl << flush;
+        cout << "ERROR FROM " << d << ": " << content << '\n';
         return createMessage(MessageType::ERR, {d, content});
     } else if (type == "BYE") {
         string F, d;

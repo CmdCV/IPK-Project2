@@ -70,12 +70,12 @@ void InputHandler::run() {
             if (input[0] == '/') {
                 handleCommand(input);
             } else {
-                // if (!authenticated) {
-                //     cout << "ERROR: Not authenticated.\n" << flush;
-                // } else {
-                printf_debug("Input: No / detected, processing as message");
-                handleMessage(input);
-                // }
+                if (!authenticated.load(std::memory_order_acquire)) {
+                    cout << "ERROR: Not authenticated.\n" << flush;
+                } else {
+                    printf_debug("Input: No / detected, processing as message");
+                    handleMessage(input);
+                }
             }
         }
     }
@@ -209,9 +209,6 @@ void InputHandler::stop() {
     vector<string> params;
     params.push_back(this->displayName);
     if (this->arguments.proto == ProtocolType::TCP) {
-        if (authenticated.load(std::memory_order_acquire)) {
-            tcpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
-        }
         tcpClient->stop();
     } else {
         if (authenticated.load(std::memory_order_acquire)) {

@@ -95,7 +95,7 @@ unique_ptr<Message> UDPClient::receiveMessage() {
     if (waitingForConfirm.load(std::memory_order_acquire)) {
         return nullptr;
     }
-    uint8_t buf[65536];
+    uint8_t buf[70000] = {0};
     sockaddr_in peer{};
     socklen_t addrLen = sizeof(peer);
     ssize_t n = recvfrom(ip_socket, buf, sizeof(buf), 0,

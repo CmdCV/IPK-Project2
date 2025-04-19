@@ -59,7 +59,7 @@ void TCPClient::sendMessage(unique_ptr<Message> message) {
 
 unique_ptr<Message> TCPClient::receiveMessage() {
     printf_debug("TCPClient: Waiting for messages...");
-    char buffer[1024] = {0};
+    char buffer[70000] = {0};
     ssize_t bytesRead = recv(this->ip_socket, buffer, sizeof(buffer) - 1, 0);
     if (bytesRead < 0) {
         if (errno == EINTR || errno == EBADF) {
