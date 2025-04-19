@@ -163,6 +163,7 @@ void InputHandler::processIncomingMessage() {
         unique_ptr<Message> msg = arguments.proto == ProtocolType::TCP ? tcpClient->receiveMessage() : udpClient->receiveMessage();
 
         if (!msg) {
+            // No message (connection closed), stop processing
             return;
         }
 
@@ -177,6 +178,7 @@ void InputHandler::processIncomingMessage() {
                 }
                 break;
             }
+            case MessageType::ERR:
             case MessageType::BYE:
                 stop();
                 break;
@@ -184,8 +186,20 @@ void InputHandler::processIncomingMessage() {
                 break;
         }
     } catch (const exception& e) {
-        printf_debug("InputHandler: Error processing message: %s", e.what());
-        cout << "ERROR: Invalid message.\n" << flush;
+        if (running.load(std::memory_order_acquire)) {
+            printf_debug("InputHandler: Error processing message: %s", e.what());
+            cout << "ERROR: Invalid message.\n" << flush;
+
+            vector<string> params;
+            params.push_back(this->displayName);
+            params.push_back("Invalid message");
+            if (arguments.proto == ProtocolType::TCP) {
+                tcpClient->sendMessage(MessageFactory::createMessage(MessageType::ERR, params));
+            } else {
+                udpClient->sendMessage(MessageFactory::createMessage(MessageType::ERR, params));
+            }
+            stop();
+        }
     }
 }
 

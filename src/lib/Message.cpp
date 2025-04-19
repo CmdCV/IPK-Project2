@@ -148,7 +148,7 @@ string ErrMessage::serialize() const {
 
 vector<uint8_t> ErrMessage::serializeUDP(uint16_t msgId) const {
     vector<uint8_t> buf;
-    buf.push_back(5);  // ERR
+    buf.push_back(0xFE);  // ERR
     buf.push_back((msgId >> 8) & 0xFF);
     buf.push_back(msgId & 0xFF);
     buf.insert(buf.end(), displayName.begin(), displayName.end());
@@ -172,7 +172,7 @@ string ByeMessage::serialize() const {
 
 vector<uint8_t> ByeMessage::serializeUDP(uint16_t msgId) const {
     vector<uint8_t> buf;
-    buf.push_back(6);  // BYE
+    buf.push_back(0xFF);  // BYE
     buf.push_back((msgId >> 8) & 0xFF);
     buf.push_back(msgId & 0xFF);
     buf.insert(buf.end(), displayName.begin(), displayName.end());
@@ -250,20 +250,27 @@ unique_ptr<Message> MessageFactory::parseMessage(const string& input) {
         string F, d, IS;
         iss >> F >> d >> IS;
         string m; getline(iss, m);
-        cout << d << ": " << m.substr(1) << endl << flush;
-        return createMessage(MessageType::MSG, {d, m.substr(1)});
+        string content = m.substr(1);
+        if (!content.empty() && content.back() == '\r') content.pop_back();
+        cout << d << ": " << content << endl << flush;
+        return createMessage(MessageType::MSG, {d, content});
     } else if (type == "REPLY") {
         string ok, IS;
         iss >> ok >> IS;
         string m; getline(iss, m);
-        cout << "Action " << (ok == "OK" ? "Success: " : "Failure: ") << m.substr(1) << endl << flush;
-        return createMessage(MessageType::REPLY, {ok == "OK" ? "true" : "false", m.substr(1)});
+        string content = m.substr(1);
+        if (!content.empty() && content.back() == '\r') content.pop_back();
+        cout << "Action " << (ok == "OK" ? "Success: " : "Failure: ") << content << endl << flush;
+        return createMessage(MessageType::REPLY, {ok == "OK" ? "true" : "false", content, "0"});
     } else if (type == "ERR") {
         string F, d, IS;
         iss >> F >> d >> IS;
         string m; getline(iss, m);
-        cout << "ERROR FROM " << d << ": " << m.substr(1) << endl << flush;
-        return createMessage(MessageType::ERR, {d, m.substr(1)});
+        string content = m.substr(1);
+        if (!content.empty() && content.back() == '\r') content.pop_back();
+        // ERROR: {MessageContent}\n
+        cout << "ERROR: " << ": " << content << endl << flush;
+        return createMessage(MessageType::ERR, {d, content});
     } else if (type == "BYE") {
         string F, d;
         iss >> F >> d;

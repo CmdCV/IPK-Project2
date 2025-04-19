@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <string>
+#include <cerrno>
 
 TCPClient::TCPClient(const ParsedArgs& args) :
     ProtocolClient(args.host, args.port) {
@@ -61,7 +62,15 @@ unique_ptr<Message> TCPClient::receiveMessage() {
     char buffer[1024] = {0};
     ssize_t bytesRead = recv(this->ip_socket, buffer, sizeof(buffer) - 1, 0);
     if (bytesRead < 0) {
+        if (errno == EINTR || errno == EBADF) {
+            // Interrupted or socket closed: treat as shutdown
+            return nullptr;
+        }
         throw runtime_error("ERROR: Failed to receive message");
+    }
+    if (bytesRead == 0) {
+        // Server closed connection gracefully
+        return nullptr;
     }
     string msgStr = string(buffer, bytesRead);
     printf_debug("TCPClient: Received message: %s", msgStr.c_str());
