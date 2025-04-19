@@ -76,6 +76,8 @@ public:
     ReplyMessage(bool success, const string& messageContent, uint16_t refMsgId);
     string serialize() const override;
     vector<uint8_t> serializeUDP(uint16_t msgId) const override;
+    // Returns true if the reply indicates success
+    bool isSuccess() const { return success; }
 };
 
 class ErrMessage : public Message {

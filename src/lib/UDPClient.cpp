@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <cstdio>
 #include <cstring>
+#include <atomic>
 
 UDPClient::UDPClient(const ParsedArgs& args)
   : ProtocolClient(args.host, args.port),
@@ -50,6 +51,7 @@ void UDPClient::stop() {
 }
 
 void UDPClient::sendMessage(unique_ptr<Message> message) {
+    waitingForConfirm.store(true, std::memory_order_release);
     uint16_t msgId = nextMsgId++;
     auto buf = message->serializeUDP(msgId);
 
@@ -80,6 +82,7 @@ void UDPClient::sendMessage(unique_ptr<Message> message) {
             uint16_t rid = (uint16_t(respBuf[1])<<8) | respBuf[2];
             if (rid == msgId) {
                 printf_debug("UDPClient: Got CONFIRM for %u", msgId);
+                waitingForConfirm.store(false, std::memory_order_release);
                 return;
             }
         }
@@ -89,6 +92,9 @@ void UDPClient::sendMessage(unique_ptr<Message> message) {
 }
 
 unique_ptr<Message> UDPClient::receiveMessage() {
+    if (waitingForConfirm.load(std::memory_order_acquire)) {
+        return nullptr;
+    }
     uint8_t buf[65536];
     sockaddr_in peer{};
     socklen_t addrLen = sizeof(peer);

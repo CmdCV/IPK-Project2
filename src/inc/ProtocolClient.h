@@ -11,7 +11,7 @@ using namespace std;
 class ProtocolClient {
 public:
     ProtocolClient(string host, uint16_t port);
-    ~ProtocolClient();
+    virtual ~ProtocolClient();
 
     virtual void stop() = 0;
     virtual void sendMessage(unique_ptr<Message> message) = 0;

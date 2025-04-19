@@ -13,5 +13,7 @@ public:
     void stop() override;
     void sendMessage(unique_ptr<Message> message) override;
     unique_ptr<Message> receiveMessage() override;
+private:
+    std::string recvBuffer;
 };
 #endif //TCPCLIENT_H

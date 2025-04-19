@@ -1,5 +1,9 @@
 #include "../inc/InputHandler.h"
 #include <chrono>
+#include <sys/select.h>
+#include <unistd.h>
+#include <atomic>
+#include <thread>
 
 InputHandler::InputHandler(ParsedArgs args):
     arguments(args) {
@@ -40,22 +44,38 @@ InputHandler::~InputHandler() {
 void InputHandler::run() {
     string input;
     while (running) {
-        // cout << "> ";
-        getline(cin, input);
-
-        if (input.empty()) {
-            printf_debug("Input: User input was empty, skipping");
+        // wait for stdin with timeout to allow exit without blocking
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(STDIN_FILENO, &readfds);
+        struct timeval tv = {0, 100000}; // 100 ms timeout
+        int ret = select(STDIN_FILENO + 1, &readfds, nullptr, nullptr, &tv);
+        if (ret > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
+            if (!std::getline(std::cin, input)) {
+                // EOF or error, stop loop
+                running = false;
+                break;
+            }
+        } else {
+            // no input ready, recheck running flag
             continue;
         }
 
-        if (input[0] == '/') {
-            handleCommand(input);
-        } else {
-            if (!authenticated) {
-                cout << "ERROR: Not authenticated.\n" << flush;
+        if (running) {
+            if (input.empty()) {
+                printf_debug("Input: User input was empty, skipping");
+                continue;
+            }
+
+            if (input[0] == '/') {
+                handleCommand(input);
             } else {
-            printf_debug("Input: No / detected, processing as message");
+                // if (!authenticated) {
+                //     cout << "ERROR: Not authenticated.\n" << flush;
+                // } else {
+                printf_debug("Input: No / detected, processing as message");
                 handleMessage(input);
+                // }
             }
         }
     }
@@ -69,7 +89,7 @@ void InputHandler::handleCommand(const string& command) {
     if (cmd == "/help") {
         printf_debug("Input: /help command received");
         printHelp();
-    } else if (!authenticated) {
+    } else if (!authenticated.load(std::memory_order_acquire)) {
         if (cmd == "/auth") {
             string username, secret, displayName;
             iss >> username >> secret >> displayName;
@@ -147,11 +167,18 @@ void InputHandler::processIncomingMessage() {
         }
 
         switch (msg->getType()) {
-            case MessageType::REPLY:
-                if (!authenticated) authenticated = true;
+            case MessageType::REPLY: {
+                // Only set authenticated on a successful reply
+                if (!authenticated.load(std::memory_order_acquire)) {
+                    auto replyMsg = dynamic_cast<ReplyMessage*>(msg.get());
+                    if (replyMsg && replyMsg->isSuccess()) {
+                        authenticated.store(true, std::memory_order_release);
+                    }
+                }
                 break;
+            }
             case MessageType::BYE:
-                running = false;
+                stop();
                 break;
             default:
                 break;
@@ -167,12 +194,12 @@ void InputHandler::stop() {
     vector<string> params;
     params.push_back(this->displayName);
     if (this->arguments.proto == ProtocolType::TCP) {
-        if (authenticated) {
+        if (authenticated.load(std::memory_order_acquire)) {
             tcpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
         }
         tcpClient->stop();
     } else {
-        if (authenticated) {
+        if (authenticated.load(std::memory_order_acquire)) {
             udpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
         }
         udpClient->stop();

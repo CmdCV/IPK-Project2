@@ -10,7 +10,7 @@
 #include <string>
 #include <sstream>
 #include <thread>
-
+#include <atomic>
 
 using namespace std;
 
@@ -23,7 +23,7 @@ public:
     void run();
     void stop();
 private:
-    bool authenticated = false;
+    std::atomic<bool> authenticated{false};
     bool running = true;
     ParsedArgs arguments;
     string displayName;

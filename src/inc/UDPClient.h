@@ -5,6 +5,7 @@
 #include "ProtocolClient.h"
 #include <set>
 #include <arpa/inet.h>
+#include <atomic>
 
 class UDPClient: public ProtocolClient {
 public:
@@ -20,5 +21,6 @@ private:
     uint16_t nextMsgId = 1;  // next message ID for UDP reliability
     struct sockaddr_in serverAddr;           // Remote server address (dynamic port)
     set<uint16_t> receivedMsgIds;       // Track and dedupe incoming message IDs
+    std::atomic<bool> waitingForConfirm{false};  // skip receiveMessage while awaiting confirm
 };
 #endif //UDPCLIENT_H

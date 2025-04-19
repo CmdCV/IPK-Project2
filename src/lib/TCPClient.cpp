@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <stdexcept>
 #include <iostream>
+#include <string>
 
 TCPClient::TCPClient(const ParsedArgs& args) :
     ProtocolClient(args.host, args.port) {
