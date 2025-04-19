@@ -18,7 +18,7 @@ void signal_handler(int signal) {
 
 int main(int argc, char* argv[]) {
     InputHandler handler(ArgHandler::parse(argc, argv));
-    globalHandler = &handler; // Nastavení globálního ukazatele
+    globalHandler = &handler;
     signal(SIGINT, signal_handler);
     handler.run();
 

@@ -2,13 +2,14 @@
 #define MESSAGE_H
 
 #include "debugPrint.h"
-
 #include <string>
 #include <vector>
 #include <cstdint>
-#include <stdexcept>
 #include <regex>
 #include <memory>
+#include <iostream>
+#include <regex>
+#include <stdexcept>
 #include <sstream>
 
 using namespace std;

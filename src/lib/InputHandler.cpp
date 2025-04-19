@@ -1,9 +1,4 @@
 #include "../inc/InputHandler.h"
-#include <chrono>
-#include <sys/select.h>
-#include <unistd.h>
-#include <atomic>
-#include <thread>
 
 InputHandler::InputHandler(ParsedArgs args):
     arguments(args) {
@@ -209,6 +204,9 @@ void InputHandler::stop() {
     vector<string> params;
     params.push_back(this->displayName);
     if (this->arguments.proto == ProtocolType::TCP) {
+        if (authenticated.load(std::memory_order_acquire)) {
+            tcpClient->sendMessage(MessageFactory::createMessage(MessageType::BYE, params));
+        }
         tcpClient->stop();
     } else {
         if (authenticated.load(std::memory_order_acquire)) {
@@ -221,7 +219,7 @@ void InputHandler::stop() {
 void InputHandler::printHelp() {
     cout << "Available commands:\n"
         << "/auth <username> <secret> <displayName> - Authenticate user\n"
-        << "/join <channel> - Join a channel\n"
+        << "/join <channelID> - Join a channel\n"
         << "/rename <displayName> - Change display name\n"
         << "/help - Show this help message\n"
         << flush;

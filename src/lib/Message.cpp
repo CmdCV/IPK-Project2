@@ -1,33 +1,27 @@
 #include "../inc/Message.h"
 
-#include <iostream>
-#include <regex>
-#include <stdexcept>
-#include <sstream>
-
 using namespace std;
 
-// --- Statické validátory ---
 void Message::validateLength(const string& value, size_t maxLength, const string& fieldName) {
     if (value.size() > maxLength) {
-        throw invalid_argument(fieldName + " exceeds maximum length of " + to_string(maxLength));
+        cout << "ERROR: " << fieldName << " exceeds maximum length of " << to_string(maxLength)<<"\n"<<flush;
     }
 }
 
 void Message::validateRegex(const string& value, const string& pattern, const string& fieldName) {
     if (!regex_match(value, regex(pattern))) {
-//        throw invalid_argument(fieldName + " contains invalid characters.");
+        cout << "ERROR: " << fieldName << " contains invalid characters.\n"<<flush;
+        throw invalid_argument(fieldName + " contains invalid characters.");
     }
 }
 
-// --- AuthMessage ---
 AuthMessage::AuthMessage(const string& u, const string& d, const string& s)
     : Message(MessageType::AUTH), username(u), displayName(d), secret(s)
 {
     validateLength(username, 20, "Username");
     validateRegex(username, "[a-zA-Z0-9_-]+", "Username");
     validateLength(displayName, 20, "DisplayName");
-    validateRegex(displayName, "[\\x21-\\x7E]+", "DisplayName");
+    validateRegex(displayName, "^[!-~]+$", "DisplayName");
     validateLength(secret, 128, "Secret");
     validateRegex(secret, "[a-zA-Z0-9_-]+", "Secret");
 }
@@ -50,14 +44,13 @@ vector<uint8_t> AuthMessage::serializeUDP(uint16_t msgId) const {
     return buf;
 }
 
-// --- JoinMessage ---
 JoinMessage::JoinMessage(const string& c, const string& d)
     : Message(MessageType::JOIN), channelID(c), displayName(d)
 {
     validateLength(channelID, 20, "ChannelID");
     validateRegex(channelID, "[a-zA-Z0-9_-]+", "ChannelID");
     validateLength(displayName, 20, "DisplayName");
-    validateRegex(displayName, "[\\x21-\\x7E]+", "DisplayName");
+    validateRegex(displayName, "^[!-~]+$", "DisplayName");
 }
 
 string JoinMessage::serialize() const {
@@ -76,14 +69,13 @@ vector<uint8_t> JoinMessage::serializeUDP(uint16_t msgId) const {
     return buf;
 }
 
-// --- MsgMessage ---
 MsgMessage::MsgMessage(const string& d, const string& m)
     : Message(MessageType::MSG), displayName(d), messageContent(m)
 {
     validateLength(displayName, 20, "DisplayName");
-    validateRegex(displayName, "[\\x21-\\x7E]+", "DisplayName");
+    validateRegex(displayName, "^[!-~]+$", "DisplayName");
     validateLength(messageContent, 60000, "MessageContent");
-    validateRegex(messageContent, "[\\x0A\\x20-\\x7E]+", "MessageContent");
+    validateRegex(messageContent, "^[\\n -~]+$", "MessageContent");
 }
 
 string MsgMessage::serialize() const {
@@ -102,13 +94,9 @@ vector<uint8_t> MsgMessage::serializeUDP(uint16_t msgId) const {
     return buf;
 }
 
-// --- ReplyMessage ---
 ReplyMessage::ReplyMessage(bool s, const string& m, uint16_t r)
     : Message(MessageType::REPLY), success(s), messageContent(m), refMsgId(r)
-{
-    validateLength(messageContent, 60000, "MessageContent");
-    validateRegex(messageContent, "[\\x0A\\x20-\\x7E]+", "MessageContent");
-}
+{}
 
 string ReplyMessage::serialize() const {
     string result = "REPLY ";
@@ -137,9 +125,9 @@ ErrMessage::ErrMessage(const string& d, const string& m)
     : Message(MessageType::ERR), displayName(d), messageContent(m)
 {
     validateLength(displayName, 20, "DisplayName");
-    validateRegex(displayName, "[\\x21-\\x7E]+", "DisplayName");
+    validateRegex(displayName, "^[!-~]+$", "DisplayName");
     validateLength(messageContent, 60000, "MessageContent");
-    validateRegex(messageContent, "[\\x0A\\x20-\\x7E]+", "MessageContent");
+    validateRegex(messageContent, "^[\\n -~]+$", "MessageContent");
 }
 
 string ErrMessage::serialize() const {
@@ -163,7 +151,7 @@ ByeMessage::ByeMessage(const string& d)
     : Message(MessageType::BYE), displayName(d)
 {
     validateLength(displayName, 20, "DisplayName");
-    validateRegex(displayName, "[\\x21-\\x7E]+", "DisplayName");
+    validateRegex(displayName, "^[!-~]+$", "DisplayName");
 }
 
 string ByeMessage::serialize() const {
@@ -253,7 +241,7 @@ unique_ptr<Message> MessageFactory::parseMessage(const string& input) {
         getline(iss, m);
         string content = m.substr(1);
         if (!content.empty() && content.back() == '\r') content.pop_back();
-        cout << d << ": " << content << '\n';
+        cout << d << ": " << content << "\n" << flush;
         return createMessage(MessageType::MSG, {d, content});
     } else if (type == "REPLY") {
         string ok, IS;
@@ -262,7 +250,7 @@ unique_ptr<Message> MessageFactory::parseMessage(const string& input) {
         getline(iss, m);
         string content = m.substr(1);
         if (!content.empty() && content.back() == '\r') content.pop_back();
-        cout << "Action " << (ok == "OK" ? "Success: " : "Failure: ") << content << '\n';
+        cout << "Action " << (ok == "OK" ? "Success: " : "Failure: ") << content << "\n" << flush;
         return createMessage(MessageType::REPLY, {ok == "OK" ? "true" : "false", content, "0"});
     } else if (type == "ERR") {
         string F, d, IS;
@@ -271,7 +259,7 @@ unique_ptr<Message> MessageFactory::parseMessage(const string& input) {
         getline(iss, m);
         string content = m.substr(1);
         if (!content.empty() && content.back() == '\r') content.pop_back();
-        cout << "ERROR FROM " << d << ": " << content << '\n';
+        cout << "ERROR FROM " << d << ": " << content << "\n" << flush;
         return createMessage(MessageType::ERR, {d, content});
     } else if (type == "BYE") {
         string F, d;

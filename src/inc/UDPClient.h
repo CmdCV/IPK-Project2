@@ -6,6 +6,13 @@
 #include <set>
 #include <arpa/inet.h>
 #include <atomic>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <stdexcept>
+#include <cstdio>
+#include <cstring>
 
 class UDPClient: public ProtocolClient {
 public:

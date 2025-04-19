@@ -1,13 +1,4 @@
 #include "../inc/UDPClient.h"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <stdexcept>
-#include <cstdio>
-#include <cstring>
-#include <atomic>
 
 UDPClient::UDPClient(const ParsedArgs& args)
   : ProtocolClient(args.host, args.port),

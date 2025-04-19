@@ -47,6 +47,19 @@ $(OBJ_DIR)/%.o: %.cpp
 # Generate UML diagram
 uml:
 	hpp2plantuml -i "$(INC_DIR)/*.h" -o uml.puml
+	@# Remove @enduml for editing
+	@sed -i '' -E 's/@enduml//g' uml.puml
+	@echo 'MessageFactory *-- Message' >> uml.puml
+	@echo 'TCPClient *-- MessageFactory' >> uml.puml
+	@echo 'UDPClient *-- MessageFactory' >> uml.puml
+	@echo 'ArgHandler *-- ParsedArgs' >> uml.puml
+	@echo 'class Main {' >> uml.puml
+	@echo '    +main(int argc, char* argv) : int' >> uml.puml
+	@echo '}' >> uml.puml
+	@echo 'Main ..> InputHandler' >> uml.puml
+	@echo 'Main ..> ArgHandler' >> uml.puml
+	@# Insert @enduml after editing
+	@echo '@enduml' >> uml.puml
 	plantuml -svg uml.puml -o $(DOC_DIR)/images/
 	@rm -f uml.puml
 
@@ -54,11 +67,6 @@ uml:
 zip: uml
 	zip -r $(XLOGIN).zip $(DOC_DIR)/ $(SRC_DIR)/ CHANGELOG.md README.md LICENSE Makefile -x "*.DS_Store"
 
-# Test rule
-#test: $(TARGET)
-#	@clear
-#	@chmod +x $(TEST_DIR)/test_arg.sh
-#	@$(TEST_DIR)/test_arg.sh
 
 
 # Clean rule

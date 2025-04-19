@@ -3,6 +3,13 @@
 
 #include "ArgHandler.h"
 #include "ProtocolClient.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdexcept>
+#include <iostream>
+#include <string>
+#include <cerrno>
 
 class TCPClient : public ProtocolClient
 {

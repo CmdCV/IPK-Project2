@@ -2,7 +2,6 @@
 #define ARGHANDLER_H
 
 #include "debugPrint.h"
-
 #include <string>
 #include <cstdint>
 #include <cstring>
