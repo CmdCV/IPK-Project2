@@ -148,12 +148,19 @@ By combining IP addresses with ports, network communication can be efficiently r
 - **Tools:** Scripts from _Vladyslav Malashchuk_ available on [GitHub](https://github.com/Vlad6422/VUT_IPK_CLIENT_TESTS)
 
 ### 5.2 Testing Methodology
-Testing utilized scripts provided by Malashchuk Vladyslav available at: [https://github.com/Vlad6422/VUT_IPK_CLIENT_TESTS](https://github.com/Vlad6422/VUT_IPK_CLIENT_TESTS)\
+Testing utilized custom script and one provided by Malashchuk Vladyslav available at: [https://github.com/Vlad6422/VUT_IPK_CLIENT_TESTS](https://github.com/Vlad6422/VUT_IPK_CLIENT_TESTS)\
 Tests included authentication, channel joining, messaging, and proper termination using both TCP and UDP protocols.
 For better debugging, I had to add DEBUG prints for tracing of communication flow.
 
-### 5.3 Tests
-#### Test Results
+### 5.3 Automated Tests
+
+#### 5.3.1 Arguments
+
+The python script was used for argument validation testing. \
+![Test arguments](doc/images/arg_test.png)
+
+#### 5.3.2 Functionality (by Vlad6422)
+
 ```bash
 $ python3 testo.py ../ipk25chat-client
 
@@ -168,18 +175,33 @@ Failed Tests:
 [=========-] 53/55 test cases passed
 ```
 #### Test Results Summary
-| Test Scenario                             | Result |
-|-------------------------------------------|--------|
-| Authentication                            | ✅ Passed |
-| Join Channel                              | ✅ Passed |
-| Message Sending/Receiving                 | ✅ Passed |
-| Error Handling                            | ✅ Passed |
-| Connection Termination                    | ✅ Passed |
-| Handling Multiple Messages                | ✅ Passed |
-| Segment Reassembly                        | ❌ Failed |
+| Test Scenario                  | Result |
+|--------------------------------|--------|
+| Authentication                 | ✅ Passed |
+| Join Channel                   | ✅ Passed |
+| Message Sending/Receiving      | ✅ Passed |
+| Error Handling                 | ✅ Passed |
+| Connection Termination         | ✅ Passed |
+| Handling Multiple Messages     | ✅ Passed |
+| Segment Reassembly             | ❌ Failed |
 
-**Test Conclusions:**  
-The client passed most functionality tests, with issues of no TCP message segmentation handling.
+### 5.4 Manual Tests
+
+#### 5.4.1 TCP
+
+I was manually testing and debugging the TCP client using a vitapavlik.cz server. 
+On the picture below, you can see the client and server interaction, Orange prints are for DEBUG purposes
+
+![TCP client terminal](doc/images/tcp_terminal.png)
+
+Wireshark shows proper TCP communication between the client and the server. \
+
+![Wireshark – TCP communication](doc/images/tcp_wireshark.png)
+
+#### 5.4.2 UDP
+
+Manual test of the UDP client and server on localhost, showing packet transmission, acknowledgement, and listener lifecycle.
+![UDP tests](doc/images/udp.png)
 
 ## 6. Compilation & Usage
 
