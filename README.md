@@ -243,7 +243,7 @@ run-[protocol] targets are used for testing purposes
 ---
 
 ## 8. Limitations
-- No TCP message segmentation handling.
+- No TCP message segmentation handling when there ale multiple messages in a single TCP packet.
 
 ---
 
