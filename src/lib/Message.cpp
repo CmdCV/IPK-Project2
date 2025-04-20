@@ -27,6 +27,7 @@ AuthMessage::AuthMessage(const string& u, const string& d, const string& s)
 }
 
 string AuthMessage::serialize() const {
+    // AUTH {Username} AS {DisplayName} USING {Secret}\r\n
     return "AUTH " + username + " AS " + displayName + " USING " + secret + "\r\n";
 }
 
@@ -54,6 +55,7 @@ JoinMessage::JoinMessage(const string& c, const string& d)
 }
 
 string JoinMessage::serialize() const {
+    // JOIN {ChannelID} AS {DisplayName}\r\n
     return "JOIN " + channelID + " AS " + displayName + "\r\n";
 }
 
@@ -79,6 +81,7 @@ MsgMessage::MsgMessage(const string& d, const string& m)
 }
 
 string MsgMessage::serialize() const {
+    //MSG FROM {DisplayName} IS {MessageContent}\r\n
     return "MSG FROM " + displayName + " IS " + messageContent + "\r\n";
 }
 
@@ -99,6 +102,7 @@ ReplyMessage::ReplyMessage(bool s, const string& m, uint16_t r)
 {}
 
 string ReplyMessage::serialize() const {
+    //REPLY {"OK"|"NOK"} IS {MessageContent}\r\n
     string result = "REPLY ";
     result += (success ? "OK" : "NOK");
     result += " IS ";
@@ -131,6 +135,7 @@ ErrMessage::ErrMessage(const string& d, const string& m)
 }
 
 string ErrMessage::serialize() const {
+    // ERR FROM {DisplayName} IS {MessageContent}\r\n
     return "ERR FROM " + displayName + " IS " + messageContent + "\r\n";
 }
 
@@ -155,6 +160,7 @@ ByeMessage::ByeMessage(const string& d)
 }
 
 string ByeMessage::serialize() const {
+    //BYE FROM {DisplayName}\r\n
     return "BYE FROM " + displayName + "\r\n";
 }
 

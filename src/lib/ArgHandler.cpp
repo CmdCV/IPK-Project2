@@ -2,7 +2,7 @@
 
 ParsedArgs ArgHandler::parse(int argc, char* argv[]) {
     ParsedArgs args;
-    bool valid = true;
+    bool valid = false;
 
     for (int i = 1; i < argc; ++i) {
         if (!strcmp(argv[i], "-h")) {
@@ -13,13 +13,16 @@ ParsedArgs ArgHandler::parse(int argc, char* argv[]) {
             i++;
             if(strcmp(argv[i], "tcp") == 0) {
             	args.proto = ProtocolType::TCP;
+                valid = true;
                 printf_debug("CLI arguments: Protocol set to TCP");
             } else if(strcmp(argv[i], "udp") == 0) {
                 args.proto = ProtocolType::UDP;
+                valid = true;
                 printf_debug("CLI arguments: Protocol set to UDP");
             } else {
-                valid = false;
-                printf_debug("CLI arguments: Unknown protocol %s", argv[i]);
+                cout << "ERROR: CLI arguments: Unknown protocol "<< argv[i] << "\n" << flush;
+                printHelp();
+                exit(1);
             }
         } else if (!strcmp(argv[i], "-s") && i + 1 < argc) {
             args.host = resolve_address(argv[++i]);
@@ -34,13 +37,14 @@ ParsedArgs ArgHandler::parse(int argc, char* argv[]) {
             args.retries = stoi(argv[++i]);
             printf_debug("CLI arguments: Retries set to %d", args.retries);
         } else {
-            valid = false;
-            printf_debug("CLI arguments: Unknown argument %s", argv[i]);
+            cout << "ERROR: CLI arguments: Unknown argument "<< argv[i] << "\n" << flush;
+            printHelp();
+            exit(1);
         }
     }
 
     if (!valid || args.host.empty()) {
-	    cerr << "ERROR: Unknown or incomplete argument"<< endl;
+	    cout << "ERROR: CLI arguments: Host or Protocol not specified" << "\n" << flush;
 	    printHelp();
 	    exit(1);
     }
@@ -58,7 +62,7 @@ string ArgHandler::resolve_address(string host) {
     addrinfo* address_list = nullptr; // Deklarace address_list
     int status = getaddrinfo(host.c_str(), nullptr, &hints, &address_list);
     if (status != 0) {
-        cerr << "Error: Couldn't resolve address: " << host << endl;
+        cout << "Error: Couldn't resolve address: " << host << endl;
         exit(EXIT_FAILURE);
     }
 
@@ -72,7 +76,7 @@ string ArgHandler::resolve_address(string host) {
     }
 
     freeaddrinfo(address_list);
-    cerr << "Error: No valid IPv4 address found for: " << host << endl;
+    cout << "Error: No valid IPv4 address found for: " << host << endl;
     exit(EXIT_FAILURE);
 }
 
