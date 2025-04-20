@@ -51,20 +51,28 @@ void TCPClient::sendMessage(unique_ptr<Message> message) {
 
 unique_ptr<Message> TCPClient::receiveMessage() {
     printf_debug("TCPClient: Waiting for messages...");
-    char buffer[70000] = {0};
-    ssize_t bytesRead = recv(this->ip_socket, buffer, sizeof(buffer) - 1, 0);
-    if (bytesRead < 0) {
-        if (errno == EINTR || errno == EBADF) {
-            // Interrupted or socket closed: treat as shutdown
+    string msgStr;
+    char buffer[70000];
+    while (true) {
+        ssize_t bytesRead = recv(this->ip_socket, buffer, sizeof(buffer) - 1, 0);
+        if (bytesRead < 0) {
+            if (errno == EINTR || errno == EBADF) {
+                // Interrupted or socket closed: treat as shutdown
+                return nullptr;
+            }
+            throw runtime_error("ERROR: Failed to receive message");
+        }
+        if (bytesRead == 0) {
+            // Server closed connection gracefully
             return nullptr;
         }
-        throw runtime_error("ERROR: Failed to receive message");
+        msgStr.append(buffer, static_cast<size_t>(bytesRead));
+        printf_debug("TCPClient: Received chunk: %.*s", static_cast<int>(bytesRead), buffer);
+        // Continue until message ends with CRLF
+        if (msgStr.size() >= 2 && msgStr.compare(msgStr.size() - 2, 2, "\r\n") == 0) {
+            break;
+        }
     }
-    if (bytesRead == 0) {
-        // Server closed connection gracefully
-        return nullptr;
-    }
-    string msgStr = string(buffer, bytesRead);
-    printf_debug("TCPClient: Received message: %s", msgStr.c_str());
+    printf_debug("TCPClient: Complete message: %s", msgStr.c_str());
     return MessageFactory::parseMessage(msgStr);
 }
