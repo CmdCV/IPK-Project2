@@ -116,26 +116,50 @@ By combining IP addresses with ports, network communication can be efficiently r
 ---
 
 ## 4. Components
+This section describes the key components of the chat client and their responsibilities within the application.
+
 ### 4.1 ArgHandler
-- Handles command-line argument parsing and validation.
-- Resolves hostnames to IP addresses.
+- **Responsibility:** Parses and validates command-line arguments.
+- **Main Features:**
+    - Processes transport type (TCP/UDP), server address, port, timeout, and retries.
+    - Resolves hostnames to IP addresses using `getaddrinfo`.
+    - Ensures input meets expected formats and value ranges.
+- **Output:** A `ConnectionInfo` structure passed to the client for establishing a connection.
 
 ### 4.2 InputHandler
-- Manages user input and commands (`/auth`, `/join`, `/rename`, `/help`).
-- Guards against unauthorized access and invalid commands.
+- **Responsibility:** Manages and validates user input during runtime.
+- **Main Features:**
+    - Recognizes and interprets commands such as `/auth`, `/join`, `/rename`, and `/help`.
+    - Creates `Message` objects based on parsed input.
+    - Ensures command consistency and prevents unauthorized operations.
+- **State:** Stores information about authentication and user identity.
 
 ### 4.3 Message
-- Defines message structure for communication over TCP and UDP.
-- Handles message serialization and deserialization.
+- **Responsibility:** Defines the message structure for communication between the client and the server.
+- **Main Features:**
+    - Holds data such as message type (`AUTH`, `JOIN`, `MSG`, etc.), channel ID, sender ID, payload, and more.
+    - Supports serialization and deserialization for network transmission.
 
-### 4.4 ProtocolClient
-- Abstracts common functionality shared by TCP and UDP clients.
+### 4.4 ProtocolClient *(abstract class)*
+- **Responsibility:** Provides a common interface and shared functionality for both TCP and UDP clients.
+- **Features:**
+    - Declares pure virtual methods: `sendMessage()` and `receiveMessage()`.
+    - Stores `ConnectionInfo` with server connection details.
+    - Implements timeout and retry mechanisms for UDP-based communication.
 
 #### 4.4.1 TCPClient
-- Manages TCP connections, including socket creation, message sending, and receiving.
+- **Responsibility:** Handles communication with the server using the TCP protocol.
+- **Features:**
+    - Establishes a connection using `socket()` and `connect()`.
+    - Sends and receives messages using `send()` and `recv()`, partially handling message segmentation.
+    - Maintains an open socket and detects disconnections.
 
 #### 4.4.2 UDPClient
-- Implements UDP message transmission, receiving, and confirmation handling.
+- **Responsibility:** Implements the client using the UDP protocol.
+- **Features:**
+    - Sends datagrams using `sendto()` without establishing a connection, receives via `recvfrom()`.
+    - Implements a custom acknowledgment mechanism with timeout and retry logic.
+    - Uses message IDs to detect duplicate or lost packets.
 
 ![UML Diagram](doc/images/uml.svg)
 
